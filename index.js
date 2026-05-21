@@ -4,36 +4,6 @@
 let cart = [];
 
 setupCart();
-
-function checkout() {
-    let total = 0;
-    let hasItems = false;
-
-    for (let i = 0; i < menus.length; i++) {
-        for (let j = 0; j < menus[i].variants.length; j++) {
-            const qty = cart[i][j];
-            if (qty > 0) {
-                total += qty * menus[i].variants[j].price;
-                hasItems = true;
-            }
-        }
-    }
-
-    if (!hasItems) {
-        alert('Cart is empty');
-        return;
-    }
-
-    alert(`Total: $${total}`);
-
-    for (let i = 0; i < menus.length; i++) {
-        for (let j = 0; j < menus[i].variants.length; j++) {
-            cart[i][j] = 0;
-            document.getElementById(`qty-${i}-${j}`).innerHTML = 0;
-        }
-    }
-}
-
 renderMenus();
 
 function substractQty(menuIndex, variantIndex) {
@@ -44,7 +14,7 @@ function substractQty(menuIndex, variantIndex) {
 
         const menuName = menus[menuIndex].name;
         const variantName = menus[menuIndex].variants[variantIndex].description;
-        alert(`${menuName} - ${variantName} cannot be less than 0`);
+        alert(`${menuName} - ${variantName} cannot be less than 0.`);
     }
 
     const id = `qty-${menuIndex}-${variantIndex}`;
@@ -54,6 +24,14 @@ function substractQty(menuIndex, variantIndex) {
 
 function addQty(menuIndex, variantIndex) {
     cart[menuIndex][variantIndex] += 1;
+
+    const stock = menus[menuIndex].variants[variantIndex].stock;
+    if (cart[menuIndex][variantIndex] > stock) {
+        cart[menuIndex][variantIndex] = stock;
+        const menuName = menus[menuIndex].name;
+        const variantName = menus[menuIndex].variants[variantIndex].description;
+        alert(`${menuName} - ${variantName} cannot exceed ${stock}.`);
+    }
 
     const id = `qty-${menuIndex}-${variantIndex}`;
 
@@ -66,7 +44,7 @@ function setupCart() {
         for (let j = 0; j < menus[i].variants.length; j++) {
             variantCart.push(0);
         }
-        cart.push(variantCart);
+        cart[i] = variantCart;
     }
 }
 
@@ -111,4 +89,26 @@ function renderMenus() {
     }
 
     document.getElementById('menu-grid').innerHTML = menuGrid;
+}
+
+function checkout() {
+    let total = 0;
+    for (let i = 0; i < menus.length; i++) {
+        const m = menus[i];
+        for (let j = 0; j < m.variants.length; j++) {
+            const v = m.variants[j];
+            total += cart[i][j] * v.price;
+        }
+    }
+
+    if (total <= 0) {
+        alert('Select at least 1 menu variant first.');
+        return;
+    }
+    
+    const params = new URLSearchParams();
+
+    params.set('cart', JSON.stringify(cart));
+    params.set('anotherthing', 'hello');
+    window.location.href = `order-confirmation/index.html?${params.toString()}`;
 }
